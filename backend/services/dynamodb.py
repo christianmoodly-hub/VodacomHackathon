@@ -17,7 +17,8 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 
 # Open and in-progress cases are the ones hotspot analysis should see.
-ACTIVE_STATUSES = ("open", "investigating")
+# create_case stores "OPEN"; older records may use lowercase.
+ACTIVE_STATUSES = ("open", "OPEN", "investigating", "INVESTIGATING")
 
 # Cap how many active cases we return. A full-table scan stays bounded in Lambda.
 RECENT_CASES_LIMIT = 100
@@ -128,12 +129,13 @@ class DynamoDBService:
         sorted newest-first and capped.
         """
         collected = []
+        placeholders = [f":status{index}" for index in range(len(ACTIVE_STATUSES))]
         scan_kwargs = {
-            "FilterExpression": "#status IN (:open, :investigating)",
+            "FilterExpression": f"#status IN ({', '.join(placeholders)})",
             "ExpressionAttributeNames": {"#status": "status"},
             "ExpressionAttributeValues": {
-                ":open": ACTIVE_STATUSES[0],
-                ":investigating": ACTIVE_STATUSES[1],
+                placeholder: status
+                for placeholder, status in zip(placeholders, ACTIVE_STATUSES)
             },
         }
 
