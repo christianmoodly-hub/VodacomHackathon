@@ -1,0 +1,13 @@
+case_id,record_type,date_reported,area_code,risk_indicator,possible_linked_case_ref
+CASE-SYN-1000,Missing person report,2026-01-17,Area-2,Medium,CASE-SYN-1008
+CASE-SYN-1001,Missing person report,2026-02-19,Area-3,Low,
+CASE-SYN-1002,Missing person report,2026-04-26,Area-2,High,CASE-SYN-1004
+CASE-SYN-1003,Missing person report,2026-08-18,Area-1,Low,CASE-SYN-1002
+CASE-SYN-1004,Case record,2026-08-10,Area-4,Low,
+CASE-SYN-1005,Case record,2026-08-12,Area-1,Medium,
+CASE-SYN-1006,Case record,2026-02-11,Area-3,Medium,
+CASE-SYN-1007,Missing person report,2026-04-10,Area-5,Low,
+CASE-SYN-1008,Hotspot report,2026-03-26,Area-1,Medium,
+CASE-SYN-1009,Case record,2026-07-23,Area-5,Low,CASE-SYN-1010
+CASE-SYN-1010,Case record,2026-05-10,Area-4,Medium,CASE-SYN-1011
+CASE-SYN-1011,Missing person report,2026-08-13,Area-3,Medium,

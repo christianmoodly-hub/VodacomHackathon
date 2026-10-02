@@ -1,32 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { correlateCases, createCase, getHotspots } from "./api.js";
+import { useEffect, useRef, useState } from "react";
+import { createCase } from "./api.js";
 import { formatSync } from "./format.js";
-import { normalizeHotspot } from "./geo.js";
 import DispatchMap from "./components/DispatchMap.jsx";
 import Header from "./components/Header.jsx";
 import Ledger from "./components/Ledger.jsx";
 import ReportPanel from "./components/ReportPanel.jsx";
+import { PACK_SUMMARY, SYNTHETIC_CASES, SYNTHETIC_LEADS, SYNTHETIC_ZONES } from "./synthetic.js";
 
-const POLL_MS = 20000;
-
-function sortHotspots(list) {
-  return [...list].sort((a, b) => {
-    if (a.risk_level !== b.risk_level) return a.risk_level === "HIGH" ? -1 : 1;
-    return b.active_case_count - a.active_case_count;
-  });
+function clusterLabel(count) {
+  const value = Number(count) || 0;
+  return `${value} ${value === 1 ? "lead" : "leads"}`;
 }
 
 export default function App() {
   const headerRef = useRef(null);
-  const abortRef = useRef(null);
   const [headerOffset, setHeaderOffset] = useState(72);
-  const [hotspots, setHotspots] = useState([]);
-  const [booted, setBooted] = useState(false);
+  const [hotspots] = useState(SYNTHETIC_ZONES);
+  const [ledgerView, setLedgerView] = useState("zones");
+  const [booted] = useState(true);
   const [error, setError] = useState("");
-  const [lastSync, setLastSync] = useState(null);
+  const [lastSync, setLastSync] = useState(() => new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-  const [focusToken, setFocusToken] = useState(0);
+  const [selectedId, setSelectedId] = useState(
+    SYNTHETIC_ZONES.find((zone) => zone.worsening)?.hotspot_id || null,
+  );
+  const [focusToken, setFocusToken] = useState(1);
   const [reportOpen, setReportOpen] = useState(false);
   const [pin, setPin] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -37,48 +35,6 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null);
   const [analysisError, setAnalysisError] = useState("");
   const [ledgerExpanded, setLedgerExpanded] = useState(false);
-
-  const refreshHotspots = useCallback(async () => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const timeoutId = window.setTimeout(() => controller.abort(), 10000);
-    try {
-      const data = await getHotspots(controller.signal);
-      if (controller.signal.aborted) return;
-      const list = sortHotspots(
-        (Array.isArray(data.hotspots) ? data.hotspots : [])
-          .map(normalizeHotspot)
-          .filter(Boolean),
-      );
-      setHotspots(list);
-      setLastSync(new Date());
-      setError("");
-      setSelectedId((current) =>
-        current && list.some((item) => item.hotspot_id === current) ? current : null,
-      );
-    } catch (caught) {
-      const replaced = abortRef.current !== controller;
-      if (caught?.name === "AbortError" && replaced) return;
-      setError(
-        caught?.name === "AbortError"
-          ? "The dispatch API timed out"
-          : caught?.message || "Could not load hotspots",
-      );
-    } finally {
-      window.clearTimeout(timeoutId);
-      if (abortRef.current === controller) setBooted(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    refreshHotspots();
-    const timer = window.setInterval(refreshHotspots, POLL_MS);
-    return () => {
-      window.clearInterval(timer);
-      abortRef.current?.abort();
-    };
-  }, [refreshHotspots]);
 
   useEffect(() => {
     const element = headerRef.current;
@@ -119,13 +75,11 @@ export default function App() {
     setPin(null);
   }
 
-  async function handleRefresh() {
+  function handleRefresh() {
     setRefreshing(true);
-    try {
-      await refreshHotspots();
-    } finally {
-      setRefreshing(false);
-    }
+    setLastSync(new Date());
+    setError("");
+    window.setTimeout(() => setRefreshing(false), 250);
   }
 
   async function handleSubmit(body) {
@@ -141,18 +95,21 @@ export default function App() {
     }
   }
 
-  async function handleCorrelate() {
+  function handleCorrelate() {
     setCorrelating(true);
     setAnalysisError("");
-    try {
-      const summary = await correlateCases();
-      setAnalysis(summary);
-      await refreshHotspots();
-    } catch (caught) {
-      setAnalysisError(caught?.message || "Analysis failed");
-    } finally {
+    setLedgerView("zones");
+    setSelectedId(SYNTHETIC_ZONES.find((zone) => zone.worsening)?.hotspot_id || null);
+    setFocusToken((token) => token + 1);
+    window.setTimeout(() => {
+      setAnalysis({
+        analyzed_case_count: SYNTHETIC_CASES.length,
+        skipped_case_count: 0,
+        cluster_count: SYNTHETIC_LEADS.length,
+        headline: PACK_SUMMARY,
+      });
       setCorrelating(false);
-    }
+    }, 280);
   }
 
   const hasHigh = hotspots.some((item) => item.risk_level === "HIGH");
@@ -205,7 +162,7 @@ export default function App() {
       ) : null}
 
       <div
-        className={`pointer-events-none absolute left-3 z-30 flex flex-col gap-2 max-md:right-3 md:left-[364px] ${
+        className={`pointer-events-none absolute left-3 z-30 flex flex-col gap-2 max-md:right-16 md:left-[364px] ${
           reportOpen ? "md:right-[384px]" : "md:w-[min(420px,calc(100%-380px))]"
         }`}
         style={{ top: headerOffset + (reportOpen && !pin ? 56 : 12) }}
@@ -244,25 +201,29 @@ export default function App() {
             className="pointer-events-auto border border-lime/40 border-l-[3px] bg-field/95 px-3 py-2 text-sm"
           >
             <span className="font-display tracking-[0.12em] text-lime uppercase">Analysis</span>
-            <span className="mt-1 block font-display text-[16px] tracking-[0.04em] tabular-nums">
-              {Number(analysis.analyzed_case_count) || 0} analyzed ·{" "}
-              {Number(analysis.cluster_count) || 0} clusters
-              {typeof analysis.skipped_case_count === "number"
-                ? ` · ${analysis.skipped_case_count} skipped`
-                : ""}
+            <span className="mt-1 block max-w-xl font-display text-[16px] leading-snug tracking-[0.03em]">
+              {analysis.headline ||
+                `${Number(analysis.analyzed_case_count) || 0} cases · ${clusterLabel(analysis.cluster_count)}`}
+            </span>
+            <span className="mt-1 block font-display text-[12px] tracking-[0.12em] text-brass uppercase">
+              {SYNTHETIC_CASES.length} cases · {clusterLabel(SYNTHETIC_LEADS.length)} · not conclusions
             </span>
           </div>
         ) : null}
 
         {correlating ? (
           <p className="pointer-events-none font-display text-[13px] tracking-[0.16em] text-brass uppercase">
-            Clustering open cases…
+            Reading the synthetic pack…
           </p>
         ) : null}
       </div>
 
       <Ledger
+        view={ledgerView}
+        onView={setLedgerView}
         hotspots={hotspots}
+        cases={SYNTHETIC_CASES}
+        leads={SYNTHETIC_LEADS}
         selectedId={selectedId}
         booted={booted}
         error={error}

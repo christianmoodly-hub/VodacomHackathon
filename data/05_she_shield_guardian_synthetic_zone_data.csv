@@ -1,0 +1,13 @@
+zone,week_number,incidents_reported,streetlights_functional_pct,public_transport_footfall,prior_month_incidents
+Zone 1 - Transit Corridor,1,2,98,312,1
+Zone 1 - Transit Corridor,2,3,67,1789,4
+Zone 1 - Transit Corridor,3,2,40,1626,5
+Zone 1 - Transit Corridor,4,3,92,1907,1
+Zone 2 - Market Precinct,1,5,71,446,3
+Zone 2 - Market Precinct,2,2,95,322,0
+Zone 2 - Market Precinct,3,5,63,1083,1
+Zone 2 - Market Precinct,4,5,61,1734,0
+Zone 3 - Residential Edge,1,0,99,386,5
+Zone 3 - Residential Edge,2,4,42,859,3
+Zone 3 - Residential Edge,3,2,75,602,1
+Zone 3 - Residential Edge,4,2,58,1371,3

@@ -175,7 +175,7 @@ export default function DispatchMap({
         map.getContainer().clientWidth,
       ),
       padding: {
-        left: narrow ? 20 : 380,
+        left: narrow ? 20 : 420,
         right: reportOpenRef.current && !narrow ? 400 : 40,
         top: 72,
         bottom: narrow ? 210 : 40,
@@ -189,6 +189,7 @@ export default function DispatchMap({
     const map = mapRef.current;
     if (!map || !mapLoaded) return undefined;
     const onClick = (event) => {
+      if (!event.lngLat) return;
       if (reportOpenRef.current) {
         onPlaceRef.current?.({
           latitude: event.lngLat.lat,
@@ -226,14 +227,24 @@ export default function DispatchMap({
       markerRef.current = null;
       return;
     }
+    const lngLat = [pin.longitude, pin.latitude];
     if (!markerRef.current) {
       const element = document.createElement("div");
       element.className = "report-pin";
       element.setAttribute("aria-hidden", "true");
-      markerRef.current = new maplibregl.Marker({ element, anchor: "center" }).addTo(map);
+      // setLngLat before addTo. Adding a marker with no location crashes MapLibre.
+      markerRef.current = new maplibregl.Marker({ element, anchor: "center" })
+        .setLngLat(lngLat)
+        .addTo(map);
+      return;
     }
-    markerRef.current.setLngLat([pin.longitude, pin.latitude]);
+    markerRef.current.setLngLat(lngLat);
   }, [pin, mapLoaded]);
 
-  return <div ref={containerRef} className="absolute inset-0" />;
+  return (
+    <div className="absolute inset-0">
+      {/* MapLibre forces position:relative on its container, so size lives on this wrapper. */}
+      <div ref={containerRef} className="h-full w-full" />
+    </div>
+  );
 }

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quick Web — Hands-On Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 16px;
+    min-height: 100vh;
+  }
+  .card {
+    width: 680px;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  }
+  .header {
+    background: #1A2D3E;
+    padding: 20px 24px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left h1 { color: white; font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+  .header-left p { color: #8fafc8; font-size: 11px; margin-top: 3px; }
+  .header-badge {
+    background: #FF6600;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .warning {
+    background: #FFF8E6;
+    border-bottom: 1px solid #F5C842;
+    padding: 10px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .warning-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .warning p { font-size: 11.5px; color: #7A5C00; line-height: 1.5; }
+  .warning strong { color: #5A3F00; }
+  .body { padding: 20px 24px; }
+  .section-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    margin-bottom: 10px;
+  }
+  .steps { margin-bottom: 20px; }
+  .step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #1A2D3E;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-num.orange { background: #FF6600; }
+  .step-content { flex: 1; }
+  .step-title { font-size: 12.5px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+  .step-desc { font-size: 11.5px; color: #64748b; line-height: 1.5; }
+  .step-url {
+    display: inline-block;
+    margin-top: 4px;
+    background: #f0f4ff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    letter-spacing: 0.02em;
+  }
+  .step-code {
+    display: inline-block;
+    margin-top: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .step-note {
+    display: inline-block;
+    margin-top: 5px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 0 18px;
+  }
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .prompt-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 11px 13px;
+  }
+  .prompt-bu {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .bu-cyber  { background: #dcfce7; color: #14532d; }
+  .bu-vfs    { background: #dbeafe; color: #1e3a8a; }
+  .bu-dit    { background: #d1fae5; color: #065f46; }
+  .bu-tsasa  { background: #ede9fe; color: #4c1d95; }
+  .bu-gt     { background: #fef3c7; color: #78350f; }
+  .bu-any    { background: #f1f5f9; color: #475569; }
+  .prompt-text {
+    font-size: 11px;
+    color: #334155;
+    font-style: italic;
+    line-height: 1.5;
+  }
+  .prompt-text::before { content: '"'; }
+  .prompt-text::after  { content: '"'; }
+  .tip-row {
+    background: #fff7f0;
+    border: 1px solid #fed7aa;
+    border-radius: 9px;
+    padding: 10px 13px;
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+  }
+  .tip-icon { font-size: 14px; flex-shrink: 0; }
+  .tip-text { font-size: 11.5px; color: #7c2d12; line-height: 1.5; }
+  .tip-text strong { color: #7c2d12; }
+  .footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 11px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left { font-size: 10px; color: #94a3b8; }
+  .footer-right { font-size: 10px; color: #94a3b8; text-align: right; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>&#9889; Amazon Quick Web — Hands-On</h1>
+      <p>AI for Africa Challenge &middot; SHE-SHIELD Response &middot; Vodacom/UJ/AWS</p>
+    </div>
+    <div class="header-badge">Your turn</div>
+  </div>
+
+  <div class="warning">
+    <div class="warning-icon">&#9888;&#65039;</div>
+    <p><strong>Important:</strong> These are AWS workshop accounts — they are <strong>not connected to any real system</strong> and contain no information about you or anyone else. <strong>Do not enter any real personal, patient, or confidential data.</strong> Use only the synthetic sample data provided in this folder, or create your own fictional examples.</p>
+  </div>
+
+  <div class="body">
+
+    <div class="section-label">Step 1 — Access your workshop account</div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Go to the Workshop Studio</div>
+          <div class="step-desc">Open your browser and navigate to the workshop portal.</div>
+          <span class="step-url">catalog.us-east-1.prod.workshops.aws</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Enter your event access code</div>
+          <div class="step-desc">Your facilitator or coach will share the access code on the day. Enter it to access your pre-provisioned AWS account.</div>
+          <span class="step-code">Access code: provided by facilitator</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Accept the terms and open the AWS Console</div>
+          <div class="step-desc">Review and accept the workshop terms. You'll be dropped into a pre-provisioned AWS account automatically.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">Step 2 — Create your Amazon Quick account</div>
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num orange">4</div>
+        <div class="step-content">
+          <div class="step-title">Search for Amazon Quick in the AWS Console</div>
+          <div class="step-desc">Type <strong>Quick</strong> in the search bar at the top of the AWS Console, or find it under <strong>Analytics</strong>. Click the result to open the Amazon Quick sign-up page.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num orange">5</div>
+        <div class="step-content">
+          <div class="step-title">Enter an account name</div>
+          <div class="step-desc">Choose any account name you like — this is just a label for your Quick workspace.</div>
+          <span class="step-note">&#10003; Can be anything — e.g. your team name</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num orange">6</div>
+        <div class="step-content">
+          <div class="step-title">Enter a notification email address</div>
+          <div class="step-desc">Enter any email address — this does not have to be your university or personal address.</div>
+          <span class="step-note">&#10003; Any email address works</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num orange">7</div>
+        <div class="step-content">
+          <div class="step-title">Click "Create account"</div>
+          <div class="step-desc">Leave all other settings as they are. Review your choices and click <strong>Create account</strong>.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num orange">8</div>
+        <div class="step-content">
+          <div class="step-title">Click "Go to Amazon Quick"</div>
+          <div class="step-desc">Your Quick account is ready. Click <strong>Go to Amazon Quick</strong> to open it.</div>
+          <span class="step-note">&#10003; You're in — Quick Web is open</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">Step 3 — Start with your use case: SHE-SHIELD Response</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num orange">9</div>
+        <div class="step-content">
+          <div class="step-title">Upload your data</div>
+          <div class="step-desc">Use the attach button in the Quick Web chat box to upload:</div>
+          <span class="step-code">06_she_shield_response_synthetic_case_data.csv</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num orange">10</div>
+        <div class="step-content">
+          <div class="step-title">Try the Level 1 prompt</div>
+          <div class="step-desc">Copy this into the chat to get started (see <strong>prompt_cards.docx</strong> in this folder for Level 2, 3, and the bonus challenge):</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prompt-grid" style="grid-template-columns: 1fr;">
+      <div class="prompt-card" style="border-color:#FF6600; border-width:2px;">
+        <span class="prompt-bu bu-any">SHE-SHIELD Response</span>
+        <div class="prompt-text">I've uploaded synthetic, anonymised case records (all IDs are placeholders like CASE-SYN-1000). Identify any cases that might be linked by area or timing, and present these strictly as possible investigative leads, not conclusions.</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">All 10 use cases &middot; starter prompts</div>
+    <div class="prompt-grid">
+      <div class="prompt-card">
+        <span class="prompt-bu bu-cyber">Ubuntu Tutor</span>
+        <div class="prompt-text">I've uploaded a small approved curriculum content set on fractions, in English and isiZulu. Acting as a friendly, patient tutor for a Grade 5 learner, ask me one practice question from the content set, in English.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-vfs">Dropout Early Support</span>
+        <div class="prompt-text">I've uploaded synthetic class data with attendance, assessment scores and support flags for 20 learners. Identify the learners who show early signs of possible disengagement, and explain what specifically stood out for each one.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-dit">Clinic Flow Copilot</span>
+        <div class="prompt-text">I've uploaded a small approved knowledge base for a healthcare navigation assistant. Using ONLY this content, ask me to choose a language, then ask me the fixed service-navigation questions one at a time.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-tsasa">MamaCare Risk Navigator</span>
+        <div class="prompt-text">I've uploaded synthetic antenatal data for 15 patients. Flag which patients show potential high-risk pregnancy signals, and explain what specifically triggered each flag.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-gt">SHE-Shield Guardian</span>
+        <div class="prompt-text">I've uploaded 4 weeks of synthetic incident, lighting and transport-footfall data across 3 zones. Identify which zone shows a changing or worsening safety pattern over the 4 weeks, and explain your reasoning.</div>
+      </div>
+      <div class="prompt-card" style="border-color:#FF6600; border-width:2px;">
+        <span class="prompt-bu bu-any">SHE-SHIELD Response</span> <span style="color:#FF6600;">&larr; your use case</span>
+        <div class="prompt-text">I've uploaded synthetic, anonymised case records (all IDs are placeholders like CASE-SYN-1000). Identify any cases that might be linked by area or timing, and present these strictly as possible investigative leads, not conclusions.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-cyber">Skills-to-Work Bridge</span>
+        <div class="prompt-text">I've uploaded 10 synthetic job-seeker profiles and 6 synthetic entry-level opportunities. For Job Seeker A, extract their skills and compare them against the opportunity list. Which role(s) are the best match, and why?</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-vfs">VoiceLens AI</span>
+        <div class="prompt-text">I've uploaded a photo of a label/sign/document. Extract all the text you can see in the image.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-dit">Waterwatch AI</span>
+        <div class="prompt-text">I've uploaded synthetic meter/pressure data for 15 pipe assets across 3 municipal zones. Flag any assets showing unusual flow or pressure patterns, and give each an anomaly score or rating.</div>
+      </div>
+      <div class="prompt-card">
+        <span class="prompt-bu bu-tsasa">Mzansi Farmer AI</span>
+        <div class="prompt-text">I've uploaded a farmer profile, a 7-day weather forecast, and 4 weeks of market prices. For Farmer A, growing maize, give practical next-step guidance based on their upcoming weather.</div>
+      </div>
+    </div>
+
+    <div class="tip-row">
+      <div class="tip-icon">&#128161;</div>
+      <div class="tip-text">
+        <strong>Tip:</strong> Read <strong>00_START_HERE.docx</strong> in the root folder before you start if this is your first time using Quick Web — it covers what Quick can and cannot do, and today's build schedule. Then upload your use case's data and try the Level 1 prompt above.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">Amazon Quick Web &middot; AWS Workshop Account &middot; AI for Africa Challenge</div>
+    <div class="footer-right">&#9888;&#65039; Workshop accounts only — no real personal data</div>
+  </div>
+
+</div>
+</body>
+</html>
