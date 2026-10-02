@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.expo/
 __pycache__/
 *.py[cod]
 .vite/
