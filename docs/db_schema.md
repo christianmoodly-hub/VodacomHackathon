@@ -34,7 +34,9 @@ Areas used for tracking and risk monitoring. One item per hotspot.
 | --- | --- | --- |
 | `hotspot_id` | String | Partition key |
 | `radius` | Number | Hotspot radius in meters |
-| `risk_level` | String | Risk band, for example `low`, `medium`, `high` |
+| `risk_level` | String | `MODERATE` or `HIGH` |
 | `active_case_count` | Number | Count of open cases currently linked to the hotspot |
+| `latitude` | Number | Center latitude of the cluster |
+| `longitude` | Number | Center longitude of the cluster |
 
 Access pattern: get one hotspot by `hotspot_id`.

@@ -28,7 +28,13 @@ HOTSPOTS_TABLE_ENV = "HOTSPOTS_TABLE_NAME"
 REGION_ENV = "AWS_REGION"
 
 # Attributes a hotspot update is allowed to write. Unexpected keys are ignored.
-HOTSPOT_FIELDS = ("radius", "risk_level", "active_case_count")
+HOTSPOT_FIELDS = (
+    "radius",
+    "risk_level",
+    "active_case_count",
+    "latitude",
+    "longitude",
+)
 
 
 class DynamoDBError(Exception):
@@ -200,6 +206,28 @@ class DynamoDBService:
 
         return _from_decimal(response.get("Attributes", {}))
 
+    def list_hotspots(self):
+        """Return saved hotspots. The table has no secondary index, so Scan is the MVP read."""
+        collected = []
+        scan_kwargs = {}
+
+        try:
+            while True:
+                response = self.hotspots_table.scan(**scan_kwargs)
+                collected.extend(response.get("Items", []))
+                last_key = response.get("LastEvaluatedKey")
+                if not last_key or len(collected) >= RECENT_CASES_LIMIT:
+                    break
+                scan_kwargs["ExclusiveStartKey"] = last_key
+        except (ClientError, BotoCoreError) as error:
+            raise DynamoDBError(f"Failed to list hotspots: {error}") from error
+
+        collected.sort(
+            key=lambda item: item.get("active_case_count", 0),
+            reverse=True,
+        )
+        return [_from_decimal(item) for item in collected[:RECENT_CASES_LIMIT]]
+
 
 _service = None
 
@@ -225,3 +253,8 @@ def get_recent_cases():
 def update_hotspot_record(hotspot_id, data):
     """Update or save an active hotspot in the Hotspots table."""
     return _get_service().update_hotspot_record(hotspot_id, data)
+
+
+def list_hotspots():
+    """Fetch saved hotspot records for the dashboard."""
+    return _get_service().list_hotspots()
