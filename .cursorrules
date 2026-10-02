@@ -1,14 +1,26 @@
-# SHE-SHIELD Project Rules
+# SHE-SHIELD Response
 
-## Tech Stack & Architecture
-- Backend: AWS Lambda (Python or Node.js) + Amazon API Gateway
-- Database: Amazon DynamoDB (NoSQL) for fast case management and logging
-- Geolocation: Amazon Location Service for tracking and hotspot monitoring
-- AI / Pattern Correlation: Amazon Bedrock for analyzing missing-person reports and clustering case patterns
-- Notifications: Amazon SNS for instant emergency alerts
+This repo is a browser-only review tool for synthetic, anonymised case records. IDs are placeholders such as CASE-SYN-1000. A match is a possible investigative lead, not a conclusion. A person must verify a lead before any action.
 
-## Coding & Hackathon Guidelines
-- Keep Lambda functions modular, stateless, and lightweight.
-- Always include robust JSON error handling for API responses.
-- Use environment variables for all AWS table names, resource endpoints, and region configurations.
-- Focus on building a functional MVP fast, keeping code clean and well-commented.
+## Product boundaries
+- Use area_code. Do not add maps, GPS, latitude, longitude, geolocation, or Amazon Location Service.
+- Do not add Amazon SNS, alerts, notifications, dispatch, or anything that takes action on a lead.
+- Do not name real places or frame the screen as an operational watch desk.
+- risk_indicator and record_type are context. Do not turn them into a score or an automatic priority.
+- The same-area and cross-area day windows are reviewer assumptions. Show the values in the interface and in every coordination brief. They are not columns in the CSV.
+- Keep named links and area/timing leads in separate groups. Flag a named link when area and timing do not support it.
+
+## AWS layer
+Python Lambdas sit behind Amazon API Gateway. Region and table names come from environment variables.
+
+- POST /brief drafts one coordination brief with Amazon Bedrock (`BEDROCK_MODEL_ID`) from the two records and the thresholds that produced the lead. If the draft contains confirmed, proven, suspect, perpetrator, or definitely, regenerate once, then use the template. Store the audit object in the AuditLog table: data file, run timestamp, model id, reviewer placeholder.
+- POST /decision stores `verified`, `dismissed`, or `needs_more_info`, the reviewer placeholder, the thresholds, and a timestamp.
+- GET /audit returns audit and decision rows, newest first.
+- The browser keeps working when the API is unreachable: show Offline mode and write the brief from the local template.
+- Do not add authentication.
+
+## Coding
+- Keep the lead rules in one module so the interface and the brief use the same thresholds.
+- A coordination brief includes the possible link, the evidence, and the sentence "This requires human verification before any action is taken."
+- Keep the persistent footer: "Synthetic data only. For authorised human review. No action should be taken from this output."
+- The only case file is resources/06_she_shield_response_synthetic_case_data.csv.

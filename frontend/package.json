@@ -1,5 +1,5 @@
 {
-  "name": "she-shield-dispatch",
+  "name": "she-shield-response",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "maplibre-gl": "^5.6.1",
+    "lucide-react": "^1.49.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

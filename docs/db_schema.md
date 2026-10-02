@@ -1,42 +1,23 @@
-# SHE-SHIELD DynamoDB Schema
+# Audit log
 
-Amazon DynamoDB stores case records and geographic risk hotspots. Table names and the AWS region come from environment variables so the same code can run in any account.
+Amazon DynamoDB stores the brief audit row and the reviewer decision. The table name comes from `AUDIT_TABLE_NAME`. The region comes from `AWS_REGION`. Nothing in the table is a real identity or a location.
 
-| Table | Environment variable |
-| --- | --- |
-| Cases | `CASES_TABLE_NAME` |
-| Hotspots | `HOTSPOTS_TABLE_NAME` |
+## AuditLog
 
-Region: `AWS_REGION`
-
-## Cases
-
-Fast case management and logging. Each write is a new timestamped item under the same `case_id`, so the history of a case stays in one partition.
+One row per brief or decision. Newest rows for one lead share `lead_id` and differ by `timestamp`.
 
 | Attribute | Type | Role |
 | --- | --- | --- |
-| `case_id` | String | Partition key |
-| `timestamp` | Number | Sort key (Unix epoch milliseconds) |
-| `status` | String | Case state, for example `open`, `investigating`, `resolved` |
-| `description` | String | Missing-person report text |
-| `severity` | String | Urgency, for example `low`, `medium`, `high`, `critical` |
-| `coordinates` | Map | Location of the report |
-| `coordinates.latitude` | Number | Latitude |
-| `coordinates.longitude` | Number | Longitude |
+| `lead_id` | String | Partition key. Synthetic lead id, such as `nl:CASE-SYN-1000>CASE-SYN-1008` |
+| `timestamp` | String | Sort key. UTC time the row was written, `YYYY-MM-DDTHH:MM:SS.ffffffZ` |
+| `item_type` | String | `audit` for a brief, `decision` for a reviewer choice |
+| `data_file` | String | Set on an audit row. Always `06_she_shield_response_synthetic_case_data.csv` |
+| `model_id` | String | Set on an audit row. `BEDROCK_MODEL_ID`, or `template-fallback` when the draft is the template |
+| `reviewer` | String | Reviewer placeholder. This build stores `R-07` |
+| `decision` | String | Set on a decision row. One of `verified`, `dismissed`, `needs_more_info` |
+| `same_area_days` | Number | Same-area window used for that run |
+| `cross_area_days` | Number | Cross-area window used for that run |
 
-Access pattern: query by `case_id`, newest first (`ScanIndexForward = false`).
+`GET /audit` reads the table and returns both row types, newest timestamp first. The case fields themselves stay in the browser and in the brief response. They are not copied into this table.
 
-## Hotspots
-
-Areas used for tracking and risk monitoring. One item per hotspot.
-
-| Attribute | Type | Role |
-| --- | --- | --- |
-| `hotspot_id` | String | Partition key |
-| `radius` | Number | Hotspot radius in meters |
-| `risk_level` | String | `MODERATE` or `HIGH` |
-| `active_case_count` | Number | Count of open cases currently linked to the hotspot |
-| `latitude` | Number | Center latitude of the cluster |
-| `longitude` | Number | Center longitude of the cluster |
-
-Access pattern: get one hotspot by `hotspot_id`.
+The brief is written by Amazon Bedrock through `POST /brief`. `BEDROCK_MODEL_ID` names the model. There is no map, coordinate, alert, or sign-in table.

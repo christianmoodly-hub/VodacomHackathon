@@ -1,14 +1,12 @@
 /**
- * Talks to the SHE-SHIELD API.
+ * SHE-SHIELD Response API.
  *
- * Local mock returns the JSON object directly. API Gateway returns
- * `{ statusCode, body }` where `body` is a JSON string. Both shapes are unwrapped here.
+ * A direct call returns a JSON object. API Gateway can also return
+ * `{ statusCode, body }` where `body` is a JSON string. Both shapes are read here.
+ * A network or HTTP failure is thrown so the page can switch to offline mode.
  */
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").replace(
-  /\/$/,
-  "",
-);
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").replace(/\/$/, "");
 
 function unwrap(payload) {
   if (
@@ -17,32 +15,30 @@ function unwrap(payload) {
     typeof payload.body === "string" &&
     Object.prototype.hasOwnProperty.call(payload, "statusCode")
   ) {
-    try {
-      return { statusCode: payload.statusCode, data: JSON.parse(payload.body) };
-    } catch {
-      return { statusCode: payload.statusCode, data: { error: "Malformed API response" } };
-    }
+    return { statusCode: payload.statusCode, data: JSON.parse(payload.body) };
   }
   return { statusCode: null, data: payload };
 }
 
 export async function api(path, options = {}) {
-  const { signal, ...rest } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
   let response;
   try {
     response = await fetch(`${BASE_URL}${path}`, {
-      ...rest,
-      signal,
+      ...options,
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        ...(rest.headers || {}),
+        ...(options.headers || {}),
       },
     });
   } catch (error) {
-    if (error?.name === "AbortError") throw error;
-    const offline = new Error("Cannot reach the dispatch API");
+    const offline = new Error("Cannot reach the review API");
     offline.cause = error;
     throw offline;
+  } finally {
+    clearTimeout(timer);
   }
 
   const text = await response.text();
@@ -54,32 +50,33 @@ export async function api(path, options = {}) {
       payload = null;
     }
   }
-
-  const { statusCode, data } = unwrap(payload);
-  const status = statusCode ?? response.status;
+  let parsed;
+  try {
+    parsed = unwrap(payload);
+  } catch {
+    throw new Error("Malformed API response");
+  }
+  const status = parsed.statusCode ?? response.status;
   if (!response.ok || status >= 400) {
-    const message =
-      (data && typeof data.error === "string" && data.error) ||
-      `Request failed (${status || response.status})`;
+    const message = (parsed.data && parsed.data.error) || `Request failed (${status || response.status})`;
     const error = new Error(message);
     error.status = status || response.status;
     throw error;
   }
-
-  if (!data || typeof data !== "object") {
-    throw new Error("Empty response from the dispatch API");
+  if (!parsed.data || typeof parsed.data !== "object") {
+    throw new Error("Empty response from the review API");
   }
-  return data;
+  return parsed.data;
 }
 
-export function getHotspots(signal) {
-  return api("/hotspots", { signal });
+export function postBrief(body) {
+  return api("/brief", { method: "POST", body: JSON.stringify(body) });
 }
 
-export function createCase(body) {
-  return api("/cases", { method: "POST", body: JSON.stringify(body) });
+export function postDecision(body) {
+  return api("/decision", { method: "POST", body: JSON.stringify(body) });
 }
 
-export function correlateCases() {
-  return api("/correlate", { method: "POST" });
+export function getAudit() {
+  return api("/audit");
 }
