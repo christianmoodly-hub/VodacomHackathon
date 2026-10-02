@@ -1,0 +1,14 @@
+# SHE-SHIELD Project Rules
+
+## Tech Stack & Architecture
+- Backend: AWS Lambda (Python or Node.js) + Amazon API Gateway
+- Database: Amazon DynamoDB (NoSQL) for fast case management and logging
+- Geolocation: Amazon Location Service for tracking and hotspot monitoring
+- AI / Pattern Correlation: Amazon Bedrock for analyzing missing-person reports and clustering case patterns
+- Notifications: Amazon SNS for instant emergency alerts
+
+## Coding & Hackathon Guidelines
+- Keep Lambda functions modular, stateless, and lightweight.
+- Always include robust JSON error handling for API responses.
+- Use environment variables for all AWS table names, resource endpoints, and region configurations.
+- Focus on building a functional MVP fast, keeping code clean and well-commented.
